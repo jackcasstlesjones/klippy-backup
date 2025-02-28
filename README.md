@@ -9,7 +9,7 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 ## Features
 
 - **Automatic Extraction**: Reads directly from your Kindle device
-- **Markdown Conversion**: Transforms highlights into beautifully formatted Markdown
+- **Markdown Conversion**: Transforms highlights into formatted Markdown
 - **Obsidian Integration**: Creates backlinks and a Map of Content (MOC)
 - **Rich UI**: Enhanced experience with progress indicators and colorful output (when Rich is installed)
 - **Flexible Configuration**: Customizable output directory and formatting options
@@ -32,6 +32,7 @@ pip install rich
 ### Installing as a CLI Tool
 
 Method 1: Using ~/.local/bin
+
 ```bash
 # Clone the repository into ~/.local/bin/klippy
 git clone https://github.com/yourusername/klippy.git ~/.local/bin/klippy
@@ -54,6 +55,7 @@ source ~/.zshrc
 ```
 
 Method 2: Using a symlink
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/klippy.git ~/.local/bin/klippy
