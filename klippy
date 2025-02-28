@@ -504,21 +504,11 @@ def process_clippings(config, delete_source=False):
         
         if delete_source:
             try:
-                # Create a backup before deleting
-                backup_path = os.path.join(dest_dir, "My_Clippings_backup.txt")
-                
                 if RICH_AVAILABLE:
-                    with console.status("[bold yellow]Creating backup...", spinner="dots"):
-                        shutil.copy2(clippings_file_path, backup_path)
-                    console.print(f"[green]Created backup at[/green] {backup_path}")
-                    
-                    if Confirm.ask("Delete original clippings file?"):
+                    with console.status("[bold yellow]Deleting source file...", spinner="dots"):
                         os.remove(clippings_file_path)
-                        console.print(f"[green]Deleted source file:[/green] {clippings_file_path}")
+                    console.print(f"[green]Deleted source file:[/green] {clippings_file_path}")
                 else:
-                    shutil.copy2(clippings_file_path, backup_path)
-                    print(f"Created backup at {backup_path}")
-                    
                     # Delete the original file
                     os.remove(clippings_file_path)
                     print(f"Deleted source file: {clippings_file_path}")
@@ -544,11 +534,10 @@ def process_clippings(config, delete_source=False):
 # Delete clippings file without processing
 def delete_clippings_file(config):
     device_name = config.get('device_name', '')
-    dest_dir = os.path.expanduser(config.get('dest_dir', ''))
     clippings_file_path = get_clippings_file_path(device_name)
     
     if RICH_AVAILABLE:
-        console.print(f"[bold]Looking for clippings at:[/bold] {clippings_file_path}")
+        console.print(f"[bold]Looking for clippings at:[/bold]", clippings_file_path)
     else:
         print(f"Looking for clippings at: {clippings_file_path}")
     
@@ -560,25 +549,11 @@ def delete_clippings_file(config):
         return False
     
     try:
-        # Create a backup before deleting
-        ensure_dest_dir(dest_dir)
-        backup_path = os.path.join(dest_dir, "My_Clippings_backup.txt")
-        
         if RICH_AVAILABLE:
-            with console.status("[bold yellow]Creating backup...", spinner="dots"):
-                shutil.copy2(clippings_file_path, backup_path)
-            console.print(f"[green]Created backup at[/green] {backup_path}")
-            
-            if Confirm.ask("Delete original clippings file?"):
+            with console.status("[bold yellow]Deleting source file...", spinner="dots"):
                 os.remove(clippings_file_path)
-                console.print(f"[green]✓[/green] Deleted source file: {clippings_file_path}")
-            else:
-                console.print("[yellow]Operation cancelled by user[/yellow]")
-                return False
+            console.print(f"[green]✓[/green] Deleted source file: {clippings_file_path}")
         else:
-            shutil.copy2(clippings_file_path, backup_path)
-            print(f"Created backup at {backup_path}")
-            
             # Delete the original file
             os.remove(clippings_file_path)
             print(f"Deleted source file: {clippings_file_path}")
