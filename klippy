@@ -8,7 +8,9 @@ import shutil
 from datetime import datetime
 
 # Define default paths and settings
-CONFIG_FILE = os.path.expanduser('~/.klippy_config.json')
+CONFIG_DIR = os.path.expanduser('~/.config/klippy')
+CONFIG_FILE = os.path.join(CONFIG_DIR, 'config.json')
+OLD_CONFIG_FILE = os.path.expanduser('~/.klippy_config.json')
 print(f"Config file path: {CONFIG_FILE}")
 DEFAULT_CONFIG = {
     'device_name': 'Kindle',
@@ -18,14 +20,39 @@ DEFAULT_CONFIG = {
 
 # Load configuration
 def load_config():
+    print(f"Loading config from: {CONFIG_FILE}")
+    
+    # Check if we need to migrate from old location
+    if not os.path.exists(CONFIG_FILE) and os.path.exists(OLD_CONFIG_FILE):
+        try:
+            print(f"Migrating config from old location: {OLD_CONFIG_FILE}")
+            # Ensure the config directory exists
+            os.makedirs(CONFIG_DIR, exist_ok=True)
+            
+            # Read old config
+            with open(OLD_CONFIG_FILE, 'r') as old_f:
+                old_config = json.load(old_f)
+            
+            # Write to new location
+            with open(CONFIG_FILE, 'w') as new_f:
+                json.dump(old_config, new_f, indent=4, sort_keys=True)
+                
+            print(f"Successfully migrated config to: {CONFIG_FILE}")
+        except Exception as e:
+            print(f"Error migrating config: {str(e)}")
+    
+    # Now load from the new location
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, 'r') as f:
                 user_config = json.load(f)
+                print(f"Loaded config: {user_config}")
                 return user_config
         except json.JSONDecodeError:
             print(f"Error reading config file. Using empty configuration.")
             return {}
+    else:
+        print(f"Config file does not exist yet. Will be created when saving.")
     return {}
 
 # Save configuration
@@ -35,6 +62,9 @@ def save_config(config):
     
     print(f"Saving configuration: {valid_config}")
     print(f"Writing to file: {CONFIG_FILE}")
+    
+    # Ensure the config directory exists
+    os.makedirs(CONFIG_DIR, exist_ok=True)
     
     # Debug: Check if file exists and is writable
     if os.path.exists(CONFIG_FILE):
