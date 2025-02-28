@@ -176,7 +176,7 @@ def setup_config():
                 # Validate that the path contains at least one directory separator
                 if '/' not in dest_dir and '\\' not in dest_dir and not dest_dir.startswith('~'):
                     console.print("[bold red]Error:[/bold red] Please enter a full path with at least one directory separator (/ or \\).")
-                    console.print("Examples: ~/Documents/clippings, /Users/username/Documents, C:\\Users\\username\\Documents")
+                    print(f"Examples: ~/Documents/clippings, /Users/username/Documents, C:\\Users\\username\\Documents")
                     continue
                 
                 # If the path is relative (doesn't start with / or ~), make it absolute
