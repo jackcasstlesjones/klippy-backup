@@ -21,6 +21,7 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 ### Install Klippy
 
 #### Recommended Step
+
 Fork this repo so that you have your own copy that you can modify, then install by cloning the fork to your machine using one of the commands below.
 
 > **NOTE:** Your fork's URL will be something like this: `https://github.com/<your_github_username>/klippy.git`
@@ -28,6 +29,7 @@ Fork this repo so that you have your own copy that you can modify, then install 
 #### Clone Klippy Repository
 
 **Linux and Mac**
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/klippy.git ~/.config/klippy
@@ -39,18 +41,10 @@ chmod +x ~/.config/klippy/klippy
 pip install rich
 ```
 
-**Windows**
-```powershell
-# Clone the repository
-git clone https://github.com/yourusername/klippy.git $env:LOCALAPPDATA\klippy
-
-# Optional: Install Rich for enhanced UI
-pip install rich
-```
-
 ### Make Klippy Available System-wide
 
 **Method 1: Add to PATH (Linux/Mac)**
+
 ```bash
 # Add the directory to your PATH by appending this line to your shell config file
 echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.zshrc
@@ -64,18 +58,10 @@ source ~/.zshrc
 ```
 
 **Method 2: Create a Symlink (Linux/Mac)**
+
 ```bash
 # Create a symlink to make klippy available system-wide
 sudo ln -s ~/.config/klippy/klippy /usr/local/bin/klippy
-```
-
-**Method 3: Add to PATH (Windows PowerShell)**
-```powershell
-# Add to PATH in PowerShell profile
-Add-Content $PROFILE '[System.Environment]::SetEnvironmentVariable("Path", $Env:Path + ";$env:LOCALAPPDATA\klippy", "User")'
-
-# Reload profile
-. $PROFILE
 ```
 
 ## Usage
