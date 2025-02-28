@@ -1,23 +1,3 @@
-#!/usr/bin/env python3
-
-import re
-import os
-import json
-import argparse
-import shutil
-import time
-from datetime import datetime
-try:
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-    from rich.prompt import Prompt, Confirm
-    from rich.table import Table
-    from rich import print as rprint
-    RICH_AVAILABLE = True
-except ImportError:
-    RICH_AVAILABLE = False
-    print("For a better experience, install rich: pip install rich")
 
 # Initialize rich console if available
 console = Console() if RICH_AVAILABLE else None
