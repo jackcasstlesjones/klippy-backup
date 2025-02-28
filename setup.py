@@ -9,7 +9,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'klippy=klippy.klippy:main',
+                    'klippy=klippy_script:main',
+
         ],
     },
     scripts=['klippy-cli'],  # Add the script to be installed
