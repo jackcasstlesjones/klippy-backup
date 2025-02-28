@@ -468,8 +468,8 @@ def process_clippings(config, delete_source=False):
     clippings_file_path = get_clippings_file_path(device_name)
     
     if RICH_AVAILABLE:
-        console.print(f"[bold]Looking for clippings at:[/bold] {clippings_file_path}")
-        console.print(f"[bold]Will save markdown files to:[/bold] {dest_dir}")
+        console.print(f"[bold]Looking for clippings at:[/bold]", clippings_file_path)
+        console.print(f"[bold]Will save markdown files to:[/bold]", dest_dir)
     else:
         print(f"Looking for clippings at: {clippings_file_path}")
         print(f"Will save markdown files to: {dest_dir}")
