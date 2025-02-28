@@ -3,10 +3,10 @@
 import sys
 import os
 
-try:
-    from klippy import main
+# Add the parent directory to sys.path to allow importing the package
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from klippy.klippy import main
+
+if __name__ == "__main__":
     main()
-except ImportError:
-    print("Error importing klippy modules: No module named 'klippy'")
-    print("Make sure the package is installed correctly with 'pip install -e .'")
-    sys.exit(1)
