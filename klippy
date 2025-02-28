@@ -2,15 +2,65 @@
 
 import re
 import os
+import json
+import argparse
+import shutil
 from datetime import datetime
 
-# Define the destination directory and the clippings file path
-DEST_DIR = os.path.expanduser('~/obsidian/jacks-vault/clippings')
-CLIPPINGS_FILE_PATH = os.path.expanduser('~/../../Volumes/Kindle/documents/My Clippings.txt')
-MOC_FILENAME = "moc-clippings"  # Without .md extension for consistency with link format
+# Define default paths and settings
+CONFIG_FILE = os.path.expanduser('~/.klippy_config.json')
+DEFAULT_CONFIG = {
+    'device_name': 'Kindle',
+    'dest_dir': os.path.expanduser('~/obsidian/jacks-vault/clippings'),
+    'moc_filename': 'moc-clippings'  # Without .md extension for consistency with link format
+}
+
+# Load configuration
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            print(f"Error reading config file. Using default configuration.")
+            return DEFAULT_CONFIG
+    return DEFAULT_CONFIG
+
+# Save configuration
+def save_config(config):
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump(config, indent=4, sort_keys=True, f)
+    print(f"Configuration saved to {CONFIG_FILE}")
+
+# Setup configuration interactively
+def setup_config():
+    config = load_config()
+    
+    print("Klippy Configuration Setup")
+    print("=========================")
+    
+    device_name = input(f"Enter device name [{config.get('device_name', 'Kindle')}]: ")
+    if device_name:
+        config['device_name'] = device_name
+    
+    dest_dir = input(f"Enter destination directory [{config.get('dest_dir', DEFAULT_CONFIG['dest_dir'])}]: ")
+    if dest_dir:
+        config['dest_dir'] = os.path.expanduser(dest_dir)
+    
+    moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', 'moc-clippings')}]: ")
+    if moc_filename:
+        config['moc_filename'] = moc_filename
+    
+    save_config(config)
+    return config
+
+# Get clippings file path based on device name
+def get_clippings_file_path(device_name):
+    return os.path.expanduser(f'~/../../Volumes/{device_name}/documents/My Clippings.txt')
 
 # Ensure destination directory exists
-os.makedirs(DEST_DIR, exist_ok=True)
+def ensure_dest_dir(dest_dir):
+    os.makedirs(dest_dir, exist_ok=True)
 
 # Read the content of the clippings.txt file
 def read_clippings(file_path):
@@ -65,14 +115,14 @@ def parse_clippings(content):
     return clippings
 
 # Create markdown file for each book
-def create_markdown_files(clippings):
+def create_markdown_files(clippings, dest_dir, moc_filename):
     filenames = {}
 
     print(f"Creating markdown files for {len(clippings)} books")
     for book, quotes in clippings.items():
         clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
         filename = f"{clean_book_name}.md"
-        filepath = os.path.join(DEST_DIR, filename)
+        filepath = os.path.join(dest_dir, filename)
         filenames[book] = clean_book_name
 
         # Sort quotes by page/location number (if available)
@@ -80,7 +130,7 @@ def create_markdown_files(clippings):
 
         print(f"Writing {len(sorted_quotes)} unique clippings to {repr(filepath)}")
         with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
-            md_file.write(f"[[{MOC_FILENAME}]]\n\n")
+            md_file.write(f"[[{moc_filename}]]\n\n")
             md_file.write(f"# {book}\n\n")
 
             for page, quote in sorted_quotes:
@@ -90,12 +140,12 @@ def create_markdown_files(clippings):
                     md_file.write("**Unknown location**\n\n")
                 md_file.write(f"> {quote}\n\n")
 
-    create_moc_file(filenames)
+    create_moc_file(filenames, dest_dir, moc_filename)
     return filenames
 
 # Create a Map of Content (MOC) file
-def create_moc_file(filenames):
-    moc_filepath = os.path.join(DEST_DIR, f"{MOC_FILENAME}.md")
+def create_moc_file(filenames, dest_dir, moc_filename):
+    moc_filepath = os.path.join(dest_dir, f"{moc_filename}.md")
 
     print(f"Creating MOC file at {repr(moc_filepath)}")
     with open(moc_filepath, 'w', encoding='utf-8') as moc_file:
@@ -109,23 +159,61 @@ def create_moc_file(filenames):
             clean_name = filenames[book]
             moc_file.write(f"[[{clean_name}]]\n")
 
-# Main function
-def main():
-    print(f"Looking for clippings at: {CLIPPINGS_FILE_PATH}")
-    print(f"Will save markdown files to: {DEST_DIR}")
-
-    if not os.path.exists(CLIPPINGS_FILE_PATH):
-        print(f"ERROR: Clippings file not found at {CLIPPINGS_FILE_PATH}")
-        return
-
-    content = read_clippings(CLIPPINGS_FILE_PATH)
+# Process clippings
+def process_clippings(config, delete_source=False):
+    device_name = config.get('device_name', 'Kindle')
+    dest_dir = config.get('dest_dir', DEFAULT_CONFIG['dest_dir'])
+    moc_filename = config.get('moc_filename', 'moc-clippings')
+    
+    clippings_file_path = get_clippings_file_path(device_name)
+    
+    print(f"Looking for clippings at: {clippings_file_path}")
+    print(f"Will save markdown files to: {dest_dir}")
+    
+    if not os.path.exists(clippings_file_path):
+        print(f"ERROR: Clippings file not found at {clippings_file_path}")
+        return False
+    
+    ensure_dest_dir(dest_dir)
+    content = read_clippings(clippings_file_path)
     clippings = parse_clippings(content)
-
+    
     if clippings:
-        create_markdown_files(clippings)
+        create_markdown_files(clippings, dest_dir, moc_filename)
+        
+        if delete_source:
+            try:
+                # Create a backup before deleting
+                backup_path = os.path.join(dest_dir, "My_Clippings_backup.txt")
+                shutil.copy2(clippings_file_path, backup_path)
+                print(f"Created backup at {backup_path}")
+                
+                # Delete the original file
+                os.remove(clippings_file_path)
+                print(f"Deleted source file: {clippings_file_path}")
+            except Exception as e:
+                print(f"Error while trying to delete source file: {e}")
+        
         print("Done! Markdown files and MOC created successfully.")
+        return True
     else:
         print("No clippings found to process.")
+        return False
+
+# Main function
+def main():
+    parser = argparse.ArgumentParser(description='Kindle clippings to Markdown converter')
+    parser.add_argument('--config', action='store_true', help='Configure Klippy settings')
+    parser.add_argument('--sync', action='store_true', help='Process clippings and delete source file')
+    
+    args = parser.parse_args()
+    
+    if args.config:
+        setup_config()
+        return
+    
+    config = load_config()
+    process_clippings(config, delete_source=args.sync)
 
 if __name__ == "__main__":
     main()
