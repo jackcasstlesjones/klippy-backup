@@ -30,6 +30,7 @@ print(f"Config file path: {CONFIG_FILE}")
 DEFAULT_CONFIG = {
     'device_name': 'Kindle',
     'dest_dir': os.path.expanduser('~/obsidian/jacks-vault/clippings'),
+    'create_moc': True,
     'moc_filename': 'moc-clippings'  # Without .md extension for consistency with link format
 }
 
@@ -174,12 +175,19 @@ def setup_config():
                 dest_dir = os.path.join(os.getcwd(), dest_dir)
             config['dest_dir'] = os.path.expanduser(dest_dir)
         
-        moc_filename = Prompt.ask(
-            "Enter MOC filename (without extension)", 
-            default=config.get('moc_filename', ''),
-            show_default=True
+        create_moc = Confirm.ask(
+            "Do you want to create a Map of Content (MOC) file for your clippings?",
+            default=config.get('create_moc', True)
         )
-        config['moc_filename'] = moc_filename
+        config['create_moc'] = create_moc
+        
+        if create_moc:
+            moc_filename = Prompt.ask(
+                "Enter MOC filename (without extension)", 
+                default=config.get('moc_filename', ''),
+                show_default=True
+            )
+            config['moc_filename'] = moc_filename
     else:
         print("Klippy Configuration Setup")
         print("=========================")
@@ -196,9 +204,14 @@ def setup_config():
                 dest_dir = os.path.join(os.getcwd(), dest_dir)
             config['dest_dir'] = os.path.expanduser(dest_dir)
         
-        moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', '')}]: ")
-        # Always update the config, even if the user just pressed Enter (use the current value)
-        config['moc_filename'] = moc_filename if moc_filename else config.get('moc_filename', '')
+        create_moc_input = input(f"Do you want to create a Map of Content (MOC) file for your clippings? (y/n) [{config.get('create_moc', True) and 'y' or 'n'}]: ").lower()
+        create_moc = create_moc_input.startswith('y') if create_moc_input else config.get('create_moc', True)
+        config['create_moc'] = create_moc
+        
+        if create_moc:
+            moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', '')}]: ")
+            # Always update the config, even if the user just pressed Enter (use the current value)
+            config['moc_filename'] = moc_filename if moc_filename else config.get('moc_filename', '')
     
     save_config(config)
     return config
@@ -319,7 +332,7 @@ def parse_clippings(content):
     return clippings
 
 # Create markdown file for each book
-def create_markdown_files(clippings, dest_dir, moc_filename):
+def create_markdown_files(clippings, dest_dir, create_moc=True, moc_filename=""):
     filenames = {}
 
     if RICH_AVAILABLE:
@@ -346,7 +359,8 @@ def create_markdown_files(clippings, dest_dir, moc_filename):
                 progress.update(task, description=f"[cyan]Writing {book}...[/cyan]", completed=i)
                 
                 with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
-                    md_file.write(f"[[{moc_filename}]]\n\n")
+                    if create_moc and moc_filename:
+                        md_file.write(f"[[{moc_filename}]]\n\n")
                     md_file.write(f"# {book}\n\n")
 
                     for page, quote in sorted_quotes:
@@ -370,7 +384,8 @@ def create_markdown_files(clippings, dest_dir, moc_filename):
 
             print(f"Writing {len(sorted_quotes)} unique clippings to {repr(filepath)}")
             with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
-                md_file.write(f"[[{moc_filename}]]\n\n")
+                if create_moc and moc_filename:
+                    md_file.write(f"[[{moc_filename}]]\n\n")
                 md_file.write(f"# {book}\n\n")
 
                 for page, quote in sorted_quotes:
@@ -380,7 +395,8 @@ def create_markdown_files(clippings, dest_dir, moc_filename):
                         md_file.write("**Unknown location**\n\n")
                     md_file.write(f"> {quote}\n\n")
 
-    create_moc_file(filenames, dest_dir, moc_filename)
+    if create_moc and moc_filename:
+        create_moc_file(filenames, dest_dir, moc_filename)
     return filenames
 
 # Create a Map of Content (MOC) file
@@ -410,7 +426,8 @@ def create_moc_file(filenames, dest_dir, moc_filename):
 def process_clippings(config, delete_source=False):
     device_name = config.get('device_name', '')
     dest_dir = os.path.expanduser(config.get('dest_dir', ''))
-    moc_filename = config.get('moc_filename', '')
+    create_moc = config.get('create_moc', True)
+    moc_filename = config.get('moc_filename', '') if create_moc else ''
     
     clippings_file_path = get_clippings_file_path(device_name)
     
@@ -443,9 +460,9 @@ def process_clippings(config, delete_source=False):
     if clippings:
         if RICH_AVAILABLE:
             with console.status("[bold green]Creating markdown files...", spinner="dots"):
-                create_markdown_files(clippings, dest_dir, moc_filename)
+                create_markdown_files(clippings, dest_dir, create_moc, moc_filename)
         else:
-            create_markdown_files(clippings, dest_dir, moc_filename)
+            create_markdown_files(clippings, dest_dir, create_moc, moc_filename)
         
         if delete_source:
             try:
