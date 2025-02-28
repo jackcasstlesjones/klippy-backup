@@ -45,6 +45,9 @@ def setup_config():
     
     dest_dir = input(f"Enter destination directory [{config.get('dest_dir', DEFAULT_CONFIG['dest_dir'])}]: ")
     if dest_dir:
+        # If the path is relative (doesn't start with /), make it absolute from current directory
+        if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
+            dest_dir = os.path.join(os.getcwd(), dest_dir)
         config['dest_dir'] = os.path.expanduser(dest_dir)
     
     moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', 'moc-clippings')}]: ")
@@ -162,7 +165,7 @@ def create_moc_file(filenames, dest_dir, moc_filename):
 # Process clippings
 def process_clippings(config, delete_source=False):
     device_name = config.get('device_name', 'Kindle')
-    dest_dir = config.get('dest_dir', DEFAULT_CONFIG['dest_dir'])
+    dest_dir = os.path.expanduser(config.get('dest_dir', DEFAULT_CONFIG['dest_dir']))
     moc_filename = config.get('moc_filename', 'moc-clippings')
     
     clippings_file_path = get_clippings_file_path(device_name)
