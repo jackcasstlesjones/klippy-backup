@@ -9,7 +9,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'klippy=klippy.__main__:main',
+            'klippy=klippy.klippy:main',
         ],
     },
     description="Kindle clippings to Markdown converter for Obsidian",
