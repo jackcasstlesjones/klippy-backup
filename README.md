@@ -30,10 +30,14 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/klippy.git ~/.config/klippy
+```
 
+```bash
 # Make the script executable
 chmod +x ~/.config/klippy/klippy
+```
 
+```bash
 # Optional: Install Rich for enhanced UI
 pip install rich
 ```
@@ -42,16 +46,36 @@ pip install rich
 
 **Method 1: Add to PATH (Linux/Mac)**
 
+Option A: Using echo command:
 ```bash
-# Add the directory to your PATH by appending this line to your shell config file
+# For zsh users
 echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.zshrc
-# Or for bash users:
-# echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.bashrc
+```
 
-# Apply changes to current session
+```bash
+# For bash users
+echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.bashrc
+```
+
+Option B: Manual addition:
+1. Open your shell configuration file in a text editor:
+   - For zsh: `nano ~/.zshrc` or `vim ~/.zshrc`
+   - For bash: `nano ~/.bashrc` or `vim ~/.bashrc`
+2. Add this line to the file:
+   ```
+   export PATH="$HOME/.config/klippy:$PATH"
+   ```
+3. Save and close the file
+
+Apply changes to current session:
+```bash
+# For zsh users
 source ~/.zshrc
-# Or for bash users:
-# source ~/.bashrc
+```
+
+```bash
+# For bash users
+source ~/.bashrc
 ```
 
 **Method 2: Create a Symlink (Linux/Mac)**
@@ -68,13 +92,19 @@ Start Klippy with one of the following commands:
 ```bash
 # Configure Klippy settings
 klippy --config
+```
 
+```bash
 # Process clippings without deleting the source file
 klippy --add
+```
 
+```bash
 # Process clippings and delete the source file
 klippy --sync
+```
 
+```bash
 # Delete clippings file without processing
 klippy --delete
 ```
