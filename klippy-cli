@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+
+try:
+    from klippy import main
+    main()
+except ImportError:
+    print("Error importing klippy modules: No module named 'klippy'")
+    print("Make sure the package is installed correctly with 'pip install -e .'")
+    sys.exit(1)
