@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+
+import re
+import os
+from datetime import datetime
+
+# Define the destination directory and the clippings file path
+DEST_DIR = os.path.expanduser('~/obsidian/jacks-vault/clippings')
+CLIPPINGS_FILE_PATH = os.path.expanduser('~/../../Volumes/Kindle/documents/My Clippings.txt')
+MOC_FILENAME = "moc-clippings"  # Without .md extension for consistency with link format
+
+# Ensure destination directory exists
+os.makedirs(DEST_DIR, exist_ok=True)
+
+# Read the content of the clippings.txt file
+def read_clippings(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8-sig') as file:
+            return file.read()
+    except UnicodeDecodeError:
+        with open(file_path, 'r', encoding='latin-1') as file:
+            return file.read()
+
+# Parse the clippings into a structured format
+def parse_clippings(content):
+    clippings = {}
+    entries = content.split('==========')
+
+    for entry in entries:
+        entry = entry.strip()
+        if not entry:
+            continue
+
+        lines = entry.split('\n')
+        if len(lines) < 3:
+            continue
+
+        book_line = lines[0].strip().lstrip("\ufeff")  # Strip BOM if present
+        location_line = lines[1].strip() if len(lines) > 1 else ""
+        quote = '\n'.join(lines[2:]).strip() if len(lines) > 2 else ""
+
+        # Extract book title and author
+        book_match = re.search(r'^(.*?)(?:\((.*?)\))?$', book_line)
+        if book_match:
+            book_title = book_match.group(1).strip()
+            page_number = ""
+
+            # Extract page or location number
+            page_match = re.search(r'page (\d+)', location_line)
+            if page_match:
+                page_number = page_match.group(1)
+            else:
+                loc_match = re.search(r'location (\d+)', location_line)
+                if loc_match:
+                    page_number = f"loc {loc_match.group(1)}"
+
+            if book_title and quote:
+                # Ensure each book has a unique set of quotes
+                if book_title not in clippings:
+                    clippings[book_title] = set()
+
+                clippings[book_title].add((page_number, quote))
+
+    print(f"Found {sum(len(qs) for qs in clippings.values())} unique clippings across {len(clippings)} books.")
+    return clippings
+
+# Create markdown file for each book
+def create_markdown_files(clippings):
+    filenames = {}
+
+    print(f"Creating markdown files for {len(clippings)} books")
+    for book, quotes in clippings.items():
+        clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
+        filename = f"{clean_book_name}.md"
+        filepath = os.path.join(DEST_DIR, filename)
+        filenames[book] = clean_book_name
+
+        # Sort quotes by page/location number (if available)
+        sorted_quotes = sorted(quotes, key=lambda q: q[0] if q[0] else "")
+
+        print(f"Writing {len(sorted_quotes)} unique clippings to {repr(filepath)}")
+        with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
+            md_file.write(f"[[{MOC_FILENAME}]]\n\n")
+            md_file.write(f"# {book}\n\n")
+
+            for page, quote in sorted_quotes:
+                if page:
+                    md_file.write(f"**Page {page}**\n\n")
+                else:
+                    md_file.write("**Unknown location**\n\n")
+                md_file.write(f"> {quote}\n\n")
+
+    create_moc_file(filenames)
+    return filenames
+
+# Create a Map of Content (MOC) file
+def create_moc_file(filenames):
+    moc_filepath = os.path.join(DEST_DIR, f"{MOC_FILENAME}.md")
+
+    print(f"Creating MOC file at {repr(moc_filepath)}")
+    with open(moc_filepath, 'w', encoding='utf-8') as moc_file:
+        moc_file.write("[[home]]\n\n")
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        moc_file.write(f"*Last updated: {current_date}*\n\n")
+
+        sorted_books = sorted(filenames.keys())
+        moc_file.write("## Book Highlights\n\n")
+        for book in sorted_books:
+            clean_name = filenames[book]
+            moc_file.write(f"[[{clean_name}]]\n")
+
+# Main function
+def main():
+    print(f"Looking for clippings at: {CLIPPINGS_FILE_PATH}")
+    print(f"Will save markdown files to: {DEST_DIR}")
+
+    if not os.path.exists(CLIPPINGS_FILE_PATH):
+        print(f"ERROR: Clippings file not found at {CLIPPINGS_FILE_PATH}")
+        return
+
+    content = read_clippings(CLIPPINGS_FILE_PATH)
+    clippings = parse_clippings(content)
+
+    if clippings:
+        create_markdown_files(clippings)
+        print("Done! Markdown files and MOC created successfully.")
+    else:
+        print("No clippings found to process.")
+
+if __name__ == "__main__":
+    main()
