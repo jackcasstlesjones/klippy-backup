@@ -168,7 +168,7 @@ def setup_config():
         valid_dest_dir = False
         while not valid_dest_dir:
             dest_dir = Prompt.ask(
-                "Enter destination directory", 
+                "Enter destination directory, using a full filepath e.g ~/obsidian/my-vault/clippings", 
                 default=config.get('dest_dir', ''),
                 show_default=True
             )
