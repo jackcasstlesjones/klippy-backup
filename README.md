@@ -14,6 +14,13 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 - **Rich UI**: Enhanced experience with progress indicators and colorful output (when Rich is installed)
 - **Flexible Configuration**: Customizable output directory and formatting options
 
+## Prerequisites
+
+- **Python 3.6+**: Klippy is written in Python and requires version 3.6 or higher
+- **Git**: Required for cloning the repository
+- **Pip**: Python package manager for installing dependencies
+- **Rich** (optional): For enhanced UI with progress indicators and colorful output
+
 ## Installation
 
 > **NOTE:** Backup your existing configuration (if any exists)
