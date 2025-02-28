@@ -16,6 +16,8 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 
 ## Installation
 
+### Basic Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/klippy.git
@@ -25,6 +27,42 @@ chmod +x klippy
 
 # Optional: Install Rich for enhanced UI
 pip install rich
+```
+
+### Installing as a CLI Tool
+
+Method 1: Using ~/.local/bin
+```bash
+# Clone the repository into ~/.local/bin/klippy
+git clone https://github.com/yourusername/klippy.git ~/.local/bin/klippy
+
+# Navigate to the directory
+cd ~/.local/bin/klippy
+
+# Ensure the main script is executable
+chmod +x klippy
+
+# Add the directory to your PATH by appending this line to your shell config file
+echo 'export PATH="$HOME/.local/bin/klippy:$PATH"' >> ~/.zshrc
+# Or for bash users:
+# echo 'export PATH="$HOME/.local/bin/klippy:$PATH"' >> ~/.bashrc
+
+# Apply changes to current session
+source ~/.zshrc
+# Or for bash users:
+# source ~/.bashrc
+```
+
+Method 2: Using a symlink
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/klippy.git ~/.local/bin/klippy
+
+# Make the script executable
+chmod +x ~/.local/bin/klippy/klippy
+
+# Create a symlink to make klippy available system-wide
+ln -s ~/.local/bin/klippy/klippy /usr/local/bin/klippy
 ```
 
 ## Usage
