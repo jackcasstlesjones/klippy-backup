@@ -6,7 +6,11 @@ import os
 # Add the parent directory to sys.path to allow importing the package
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from klippy import main
+try:
+    from klippy import main
+except ImportError:
+    # If that fails, try direct import from the local directory
+    from klippy.klippy import main
 
 if __name__ == "__main__":
     main()
