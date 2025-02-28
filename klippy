@@ -294,52 +294,46 @@ def parse_clippings(content):
     processed_entries = 0
     
     if RICH_AVAILABLE:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(),
-            TextColumn("[bold]{task.completed}/{task.total}"),
-            console=console
-        ) as progress:
-            task = progress.add_task("[green]Parsing entries...", total=total_entries)
+        console.print(f"[green]Parsing [bold]{total_entries}[/bold] entries...[/green]")
+        
+        for entry in entries:
+            processed_entries += 1
+            if processed_entries % 100 == 0:  # Show progress every 100 entries
+                console.print(f"[green]Processed [bold]{processed_entries}/{total_entries}[/bold] entries...[/green]")
             
-            for entry in entries:
-                processed_entries += 1
-                progress.update(task, completed=processed_entries)
-                
-                entry = entry.strip()
-                if not entry:
-                    continue
+            entry = entry.strip()
+            if not entry:
+                continue
 
-                lines = entry.split('\n')
-                if len(lines) < 3:
-                    continue
+            lines = entry.split('\n')
+            if len(lines) < 3:
+                continue
 
-                book_line = lines[0].strip().lstrip("\ufeff")  # Strip BOM if present
-                location_line = lines[1].strip() if len(lines) > 1 else ""
-                quote = '\n'.join(lines[2:]).strip() if len(lines) > 2 else ""
+            book_line = lines[0].strip().lstrip("\ufeff")  # Strip BOM if present
+            location_line = lines[1].strip() if len(lines) > 1 else ""
+            quote = '\n'.join(lines[2:]).strip() if len(lines) > 2 else ""
 
-                # Extract book title and author
-                book_match = re.search(r'^(.*?)(?:\((.*?)\))?$', book_line)
-                if book_match:
-                    book_title = book_match.group(1).strip()
-                    page_number = ""
+            # Extract book title and author
+            book_match = re.search(r'^(.*?)(?:\((.*?)\))?$', book_line)
+            if book_match:
+                book_title = book_match.group(1).strip()
+                page_number = ""
 
-                    # Extract page or location number
-                    page_match = re.search(r'page (\d+)', location_line)
-                    if page_match:
-                        page_number = page_match.group(1)
-                    else:
-                        loc_match = re.search(r'location (\d+)', location_line)
-                        if loc_match:
-                            page_number = f"loc {loc_match.group(1)}"
+                # Extract page or location number
+                page_match = re.search(r'page (\d+)', location_line)
+                if page_match:
+                    page_number = page_match.group(1)
+                else:
+                    loc_match = re.search(r'location (\d+)', location_line)
+                    if loc_match:
+                        page_number = f"loc {loc_match.group(1)}"
 
-                    if book_title and quote:
-                        # Ensure each book has a unique set of quotes
-                        if book_title not in clippings:
-                            clippings[book_title] = set()
+                if book_title and quote:
+                    # Ensure each book has a unique set of quotes
+                    if book_title not in clippings:
+                        clippings[book_title] = set()
 
-                        clippings[book_title].add((page_number, quote))
+                    clippings[book_title].add((page_number, quote))
     else:
         for entry in entries:
             entry = entry.strip()
