@@ -261,8 +261,9 @@ def process_clippings(config, delete_source=False):
 
 # Main function
 def main():
-    parser = argparse.ArgumentParser(description='Kindle clippings to Markdown converter')
+    parser = argparse.ArgumentParser(description='Kindle clippings to Markdown converter for Obsidian')
     parser.add_argument('--config', action='store_true', help='Configure Klippy settings')
+    parser.add_argument('--add', action='store_true', help='Process clippings without deleting source file')
     parser.add_argument('--sync', action='store_true', help='Process clippings and delete source file')
     
     args = parser.parse_args()
@@ -272,6 +273,13 @@ def main():
         return
     
     config = load_config()
+    
+    # If no action flags are provided, show help
+    if not (args.add or args.sync):
+        parser.print_help()
+        return
+    
+    # --sync takes precedence over --add if both are specified
     process_clippings(config, delete_source=args.sync)
 
 if __name__ == "__main__":
