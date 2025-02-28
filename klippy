@@ -164,16 +164,35 @@ def setup_config():
         )
         config['device_name'] = device_name
         
-        dest_dir = Prompt.ask(
-            "Enter destination directory", 
-            default=config.get('dest_dir', ''),
-            show_default=True
-        )
-        if dest_dir:
-            # If the path is relative (doesn't start with /), make it absolute from current directory
-            if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
-                dest_dir = os.path.join(os.getcwd(), dest_dir)
-            config['dest_dir'] = os.path.expanduser(dest_dir)
+        # Keep asking for a valid destination directory
+        valid_dest_dir = False
+        while not valid_dest_dir:
+            dest_dir = Prompt.ask(
+                "Enter destination directory", 
+                default=config.get('dest_dir', ''),
+                show_default=True
+            )
+            if dest_dir:
+                # If the path is relative (doesn't start with /), make it absolute from current directory
+                if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
+                    dest_dir = os.path.join(os.getcwd(), dest_dir)
+                expanded_path = os.path.expanduser(dest_dir)
+                
+                # Check if the directory exists or can be created
+                try:
+                    # Try to create the directory if it doesn't exist
+                    os.makedirs(expanded_path, exist_ok=True)
+                    config['dest_dir'] = expanded_path
+                    valid_dest_dir = True
+                except (OSError, PermissionError) as e:
+                    console.print(f"[bold red]Error:[/bold red] Invalid directory path: {e}")
+                    console.print("Please enter a valid directory path.")
+            else:
+                # If they didn't enter anything, use the existing value if it exists
+                if config.get('dest_dir'):
+                    valid_dest_dir = True
+                else:
+                    console.print("[bold red]Error:[/bold red] You must enter a valid destination directory.")
         
         create_moc = Confirm.ask(
             "Do you want to create a Map of Content (MOC) file for your clippings?",
@@ -197,12 +216,31 @@ def setup_config():
         # Always update the config, even if the user just pressed Enter (use the current value)
         config['device_name'] = device_name if device_name else config.get('device_name', '')
         
-        dest_dir = input(f"Enter destination directory [{config.get('dest_dir', '')}]: ")
-        if dest_dir:
-            # If the path is relative (doesn't start with /), make it absolute from current directory
-            if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
-                dest_dir = os.path.join(os.getcwd(), dest_dir)
-            config['dest_dir'] = os.path.expanduser(dest_dir)
+        # Keep asking for a valid destination directory
+        valid_dest_dir = False
+        while not valid_dest_dir:
+            dest_dir = input(f"Enter destination directory [{config.get('dest_dir', '')}]: ")
+            if dest_dir:
+                # If the path is relative (doesn't start with /), make it absolute from current directory
+                if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
+                    dest_dir = os.path.join(os.getcwd(), dest_dir)
+                expanded_path = os.path.expanduser(dest_dir)
+                
+                # Check if the directory exists or can be created
+                try:
+                    # Try to create the directory if it doesn't exist
+                    os.makedirs(expanded_path, exist_ok=True)
+                    config['dest_dir'] = expanded_path
+                    valid_dest_dir = True
+                except (OSError, PermissionError) as e:
+                    print(f"Error: Invalid directory path: {e}")
+                    print("Please enter a valid directory path.")
+            else:
+                # If they didn't enter anything, use the existing value if it exists
+                if config.get('dest_dir'):
+                    valid_dest_dir = True
+                else:
+                    print("Error: You must enter a valid destination directory.")
         
         create_moc_input = input(f"Do you want to create a Map of Content (MOC) file for your clippings? (y/n) [{config.get('create_moc', True) and 'y' or 'n'}]: ").lower()
         create_moc = create_moc_input.startswith('y') if create_moc_input else config.get('create_moc', True)
