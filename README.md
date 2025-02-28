@@ -16,37 +16,46 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 
 ## Installation
 
-### Basic Installation
+> **NOTE:** Backup your existing configuration (if any exists)
 
+### Install Klippy
+
+#### Recommended Step
+Fork this repo so that you have your own copy that you can modify, then install by cloning the fork to your machine using one of the commands below.
+
+> **NOTE:** Your fork's URL will be something like this: `https://github.com/<your_github_username>/klippy.git`
+
+#### Clone Klippy Repository
+
+**Linux and Mac**
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/klippy.git
+git clone https://github.com/yourusername/klippy.git ~/.config/klippy
 
 # Make the script executable
-chmod +x klippy
+chmod +x ~/.config/klippy/klippy
 
 # Optional: Install Rich for enhanced UI
 pip install rich
 ```
 
-### Installing as a CLI Tool
+**Windows**
+```powershell
+# Clone the repository
+git clone https://github.com/yourusername/klippy.git $env:LOCALAPPDATA\klippy
 
-Method 1: Using ~/.local/bin
+# Optional: Install Rich for enhanced UI
+pip install rich
+```
 
+### Make Klippy Available System-wide
+
+**Method 1: Add to PATH (Linux/Mac)**
 ```bash
-# Clone the repository into ~/.local/bin/klippy
-git clone https://github.com/yourusername/klippy.git ~/.local/bin/klippy
-
-# Navigate to the directory
-cd ~/.local/bin/klippy
-
-# Ensure the main script is executable
-chmod +x klippy
-
 # Add the directory to your PATH by appending this line to your shell config file
-echo 'export PATH="$HOME/.local/bin/klippy:$PATH"' >> ~/.zshrc
+echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.zshrc
 # Or for bash users:
-# echo 'export PATH="$HOME/.local/bin/klippy:$PATH"' >> ~/.bashrc
+# echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.bashrc
 
 # Apply changes to current session
 source ~/.zshrc
@@ -54,33 +63,37 @@ source ~/.zshrc
 # source ~/.bashrc
 ```
 
-Method 2: Using a symlink
-
+**Method 2: Create a Symlink (Linux/Mac)**
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/klippy.git ~/.local/bin/klippy
-
-# Make the script executable
-chmod +x ~/.local/bin/klippy/klippy
-
 # Create a symlink to make klippy available system-wide
-ln -s ~/.local/bin/klippy/klippy /usr/local/bin/klippy
+sudo ln -s ~/.config/klippy/klippy /usr/local/bin/klippy
+```
+
+**Method 3: Add to PATH (Windows PowerShell)**
+```powershell
+# Add to PATH in PowerShell profile
+Add-Content $PROFILE '[System.Environment]::SetEnvironmentVariable("Path", $Env:Path + ";$env:LOCALAPPDATA\klippy", "User")'
+
+# Reload profile
+. $PROFILE
 ```
 
 ## Usage
 
+Start Klippy with one of the following commands:
+
 ```bash
 # Configure Klippy settings
-./klippy --config
+klippy --config
 
 # Process clippings without deleting the source file
-./klippy --add
+klippy --add
 
 # Process clippings and delete the source file
-./klippy --sync
+klippy --sync
 
 # Delete clippings file without processing
-./klippy --delete
+klippy --delete
 ```
 
 ## How It Works
