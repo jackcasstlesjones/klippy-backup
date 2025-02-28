@@ -328,7 +328,8 @@ def parse_clippings(content):
                     if loc_match:
                         page_number = f"loc {loc_match.group(1)}"
 
-                if book_title and quote:
+                # Skip entries with title "Your Clippings" as these are metadata
+                if book_title and quote and book_title.strip() != "Your Clippings":
                     # Ensure each book has a unique set of quotes
                     if book_title not in clippings:
                         clippings[book_title] = set()
@@ -363,7 +364,8 @@ def parse_clippings(content):
                     if loc_match:
                         page_number = f"loc {loc_match.group(1)}"
 
-                if book_title and quote:
+                # Skip entries with title "Your Clippings" as these are metadata
+                if book_title and quote and book_title.strip() != "Your Clippings":
                     # Ensure each book has a unique set of quotes
                     if book_title not in clippings:
                         clippings[book_title] = set()
