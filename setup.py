@@ -12,6 +12,7 @@ setup(
             'klippy=klippy.klippy:main',
         ],
     },
+    scripts=['klippy'],  # Add the script to be installed
     description="Kindle clippings to Markdown converter for Obsidian",
     author="Jack",
     author_email="",
