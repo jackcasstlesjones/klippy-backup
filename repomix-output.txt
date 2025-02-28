@@ -1,3 +1,93 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+================================================================
+File Summary
+================================================================
+
+Purpose:
+--------
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+
+File Format:
+------------
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Multiple file entries, each consisting of:
+  a. A separator line (================)
+  b. The file path (File: path/to/file)
+  c. Another separator line
+  d. The full contents of the file
+  e. A blank line
+
+Usage Guidelines:
+-----------------
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+
+Notes:
+------
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+
+Additional Info:
+----------------
+
+================================================================
+Directory Structure
+================================================================
+klippy/
+  klippy.py
+klippy.egg-info/
+  dependency_links.txt
+  entry_points.txt
+  PKG-INFO
+  requires.txt
+  SOURCES.txt
+  top_level.txt
+__init__.py
+__main__.py
+.gitignore
+klippy-cli
+README.md
+setup.py
+
+================================================================
+Files
+================================================================
+
+================
+File: klippy/klippy.py
+================
+#!/usr/bin/env python3
+
+import re
+import os
+import json
+import argparse
+import shutil
+import time
+from datetime import datetime
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+    from rich.prompt import Prompt, Confirm
+    from rich.table import Table
+    from rich import print as rprint
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+    print("For a better experience, install rich: pip install rich")
 
 # Initialize rich console if available
 console = Console() if RICH_AVAILABLE else None
@@ -601,3 +691,278 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+================
+File: klippy.egg-info/dependency_links.txt
+================
+
+
+================
+File: klippy.egg-info/entry_points.txt
+================
+[console_scripts]
+klippy = klippy.klippy:main
+
+================
+File: klippy.egg-info/PKG-INFO
+================
+Metadata-Version: 2.2
+Name: klippy
+Version: 0.1.0
+Summary: Kindle clippings to Markdown converter for Obsidian
+Home-page: 
+Author: Jack
+Author-email: 
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Requires-Dist: rich
+Dynamic: author
+Dynamic: classifier
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+================
+File: klippy.egg-info/requires.txt
+================
+rich
+
+================
+File: klippy.egg-info/SOURCES.txt
+================
+README.md
+klippy
+setup.py
+klippy.egg-info/PKG-INFO
+klippy.egg-info/SOURCES.txt
+klippy.egg-info/dependency_links.txt
+klippy.egg-info/entry_points.txt
+klippy.egg-info/requires.txt
+klippy.egg-info/top_level.txt
+
+================
+File: klippy.egg-info/top_level.txt
+================
+
+
+================
+File: __init__.py
+================
+"""
+Klippy - Kindle Clippings to Markdown Converter
+"""
+
+__version__ = '0.1.0'
+
+# Make the main function available at the package level
+try:
+    from .klippy import main
+except ImportError:
+    # Fallback for direct imports
+    from klippy import main
+
+================
+File: __main__.py
+================
+#!/usr/bin/env python3
+
+try:
+    from .klippy import main
+except ImportError:
+    try:
+        from klippy.klippy import main
+    except ImportError:
+        # Last resort fallback
+        from klippy import main
+
+if __name__ == "__main__":
+    main()
+
+================
+File: .gitignore
+================
+.aider*
+
+================
+File: klippy-cli
+================
+#!/usr/bin/env python3
+
+import sys
+import os
+
+# Add the parent directory to sys.path to allow importing the package
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from klippy import main
+except ImportError:
+    # If that fails, try direct import from the local directory
+    from klippy.klippy import main
+
+if __name__ == "__main__":
+    main()
+
+================
+File: README.md
+================
+# Klippy
+
+A sleek, efficient tool for converting Kindle highlights to Markdown files for Obsidian.
+
+## Overview
+
+Klippy extracts your Kindle highlights and notes, organizing them into neatly formatted Markdown files that integrate seamlessly with Obsidian or other Markdown-based note-taking systems.
+
+## Features
+
+- **Automatic Extraction**: Reads directly from your Kindle device
+- **Markdown Conversion**: Transforms highlights into formatted Markdown
+- **Obsidian Integration**: Creates backlinks and a Map of Content (MOC)
+- **Rich UI**: Enhanced experience with progress indicators and colorful output (when Rich is installed)
+- **Flexible Configuration**: Customizable output directory and formatting options
+
+## Prerequisites
+
+- **Python 3.6+**: Klippy is written in Python and requires version 3.6 or higher
+- **Git**: Required for cloning the repository
+- **Pip**: Python package manager for installing dependencies
+- **Rich** (optional): For enhanced UI with progress indicators and colorful output
+
+## Installation
+
+#### Clone Klippy Repository
+
+**Linux and Mac**
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/klippy.git ~/.config/klippy
+```
+
+```bash
+# Make the script executable
+chmod +x ~/.config/klippy/klippy
+```
+
+```bash
+# Optional: Install Rich for enhanced UI
+pip install rich
+```
+
+### Make Klippy Available System-wide
+
+**Method 1: Add to PATH (Linux/Mac)**
+
+Option A: Using echo command:
+```bash
+# For zsh users
+echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.zshrc
+```
+
+```bash
+# For bash users
+echo 'export PATH="$HOME/.config/klippy:$PATH"' >> ~/.bashrc
+```
+
+Option B: Manual addition:
+1. Open your shell configuration file in a text editor:
+   - For zsh: `nano ~/.zshrc` or `vim ~/.zshrc`
+   - For bash: `nano ~/.bashrc` or `vim ~/.bashrc`
+2. Add this line to the file:
+   ```
+   export PATH="$HOME/.config/klippy:$PATH"
+   ```
+3. Save and close the file
+
+Apply changes to current session:
+```bash
+# For zsh users
+source ~/.zshrc
+```
+
+```bash
+# For bash users
+source ~/.bashrc
+```
+
+**Method 2: Create a Symlink (Linux/Mac)**
+
+```bash
+# Create a symlink to make klippy available system-wide
+sudo ln -s ~/.config/klippy/klippy /usr/local/bin/klippy
+```
+
+## Usage
+
+Start Klippy with one of the following commands:
+
+```bash
+# Configure Klippy settings
+klippy --config
+```
+
+```bash
+# Process clippings without deleting the source file
+klippy --add
+```
+
+```bash
+# Process clippings and delete the source file
+klippy --sync
+```
+
+```bash
+# Delete clippings file without processing
+klippy --delete
+```
+
+## How It Works
+
+1. Connect your Kindle device to your computer
+2. Run Klippy with your preferred command
+3. Klippy extracts highlights from "My Clippings.txt"
+4. Highlights are organized by book into separate Markdown files
+5. A Map of Content (MOC) file links all your books together
+
+## License
+
+This project is available under the MIT License.
+
+================
+File: setup.py
+================
+from setuptools import setup, find_packages
+
+setup(
+    name="klippy",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[
+        "rich",
+    ],
+    entry_points={
+        'console_scripts': [
+            'klippy=klippy.klippy:main',
+        ],
+    },
+    scripts=['klippy'],  # Add the script to be installed
+    description="Kindle clippings to Markdown converter for Obsidian",
+    author="Jack",
+    author_email="",
+    url="",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.6",
+)
+
+
+
+================================================================
+End of Codebase
+================================================================
