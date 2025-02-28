@@ -5,7 +5,22 @@ import os
 import json
 import argparse
 import shutil
+import time
 from datetime import datetime
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+    from rich.prompt import Prompt, Confirm
+    from rich.table import Table
+    from rich import print as rprint
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+    print("For a better experience, install rich: pip install rich")
+
+# Initialize rich console if available
+console = Console() if RICH_AVAILABLE else None
 
 # Define default paths and settings
 CONFIG_DIR = os.path.expanduser('~/.config/klippy')
@@ -20,12 +35,24 @@ DEFAULT_CONFIG = {
 
 # Load configuration
 def load_config():
+    if RICH_AVAILABLE:
+        with console.status("[bold green]Loading configuration...", spinner="dots"):
+            time.sleep(0.5)  # Small delay for visual effect
+            return _load_config()
+    else:
+        return _load_config()
+
+def _load_config():
     print(f"Loading config from: {CONFIG_FILE}")
     
     # Check if we need to migrate from old location
     if not os.path.exists(CONFIG_FILE) and os.path.exists(OLD_CONFIG_FILE):
         try:
-            print(f"Migrating config from old location: {OLD_CONFIG_FILE}")
+            if RICH_AVAILABLE:
+                console.print(f"[yellow]Migrating config from old location:[/yellow] {OLD_CONFIG_FILE}")
+            else:
+                print(f"Migrating config from old location: {OLD_CONFIG_FILE}")
+                
             # Ensure the config directory exists
             os.makedirs(CONFIG_DIR, exist_ok=True)
             
@@ -36,23 +63,38 @@ def load_config():
             # Write to new location
             with open(CONFIG_FILE, 'w') as new_f:
                 json.dump(old_config, new_f, indent=4, sort_keys=True)
-                
-            print(f"Successfully migrated config to: {CONFIG_FILE}")
+            
+            if RICH_AVAILABLE:
+                console.print(f"[green]Successfully migrated config to:[/green] {CONFIG_FILE}")
+            else:
+                print(f"Successfully migrated config to: {CONFIG_FILE}")
         except Exception as e:
-            print(f"Error migrating config: {str(e)}")
+            if RICH_AVAILABLE:
+                console.print(f"[bold red]Error migrating config:[/bold red] {str(e)}")
+            else:
+                print(f"Error migrating config: {str(e)}")
     
     # Now load from the new location
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, 'r') as f:
                 user_config = json.load(f)
-                print(f"Loaded config: {user_config}")
+                if RICH_AVAILABLE:
+                    console.print("[green]Configuration loaded successfully[/green]")
+                else:
+                    print(f"Loaded config: {user_config}")
                 return user_config
         except json.JSONDecodeError:
-            print(f"Error reading config file. Using empty configuration.")
+            if RICH_AVAILABLE:
+                console.print("[bold red]Error reading config file. Using empty configuration.[/bold red]")
+            else:
+                print(f"Error reading config file. Using empty configuration.")
             return {}
     else:
-        print(f"Config file does not exist yet. Will be created when saving.")
+        if RICH_AVAILABLE:
+            console.print("[yellow]Config file does not exist yet. Will be created when saving.[/yellow]")
+        else:
+            print(f"Config file does not exist yet. Will be created when saving.")
     return {}
 
 # Save configuration
@@ -60,6 +102,19 @@ def save_config(config):
     # Ensure we're only saving valid config keys
     valid_config = {k: config[k] for k in DEFAULT_CONFIG.keys() if k in config}
     
+    if RICH_AVAILABLE:
+        with console.status("[bold green]Saving configuration...", spinner="dots"):
+            time.sleep(0.5)  # Small delay for visual effect
+            result = _save_config(valid_config)
+            if result:
+                console.print("[bold green]✓[/bold green] Configuration saved successfully")
+            else:
+                console.print("[bold red]✗[/bold red] Failed to save configuration")
+            return result
+    else:
+        return _save_config(valid_config)
+
+def _save_config(valid_config):
     print(f"Saving configuration: {valid_config}")
     print(f"Writing to file: {CONFIG_FILE}")
     
@@ -82,33 +137,68 @@ def save_config(config):
             with open(CONFIG_FILE, 'r') as f:
                 saved_config = json.load(f)
             print(f"Verification - File contains: {saved_config}")
+            return True
         else:
             print(f"ERROR: File does not exist after save!")
+            return False
     except Exception as e:
         print(f"ERROR saving configuration: {str(e)}")
+        return False
 
 # Setup configuration interactively
 def setup_config():
     config = load_config()
     
-    print("Klippy Configuration Setup")
-    print("=========================")
-    
-    # Only show the current config values in the prompt, no defaults
-    device_name = input(f"Enter device name [{config.get('device_name', '')}]: ")
-    # Always update the config, even if the user just pressed Enter (use the current value)
-    config['device_name'] = device_name if device_name else config.get('device_name', '')
-    
-    dest_dir = input(f"Enter destination directory [{config.get('dest_dir', '')}]: ")
-    if dest_dir:
-        # If the path is relative (doesn't start with /), make it absolute from current directory
-        if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
-            dest_dir = os.path.join(os.getcwd(), dest_dir)
-        config['dest_dir'] = os.path.expanduser(dest_dir)
-    
-    moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', '')}]: ")
-    # Always update the config, even if the user just pressed Enter (use the current value)
-    config['moc_filename'] = moc_filename if moc_filename else config.get('moc_filename', '')
+    if RICH_AVAILABLE:
+        console.print(Panel.fit(
+            "[bold blue]Klippy Configuration Setup[/bold blue]",
+            border_style="blue"
+        ))
+        
+        # Only show the current config values in the prompt, no defaults
+        device_name = Prompt.ask(
+            "Enter device name", 
+            default=config.get('device_name', ''),
+            show_default=True
+        )
+        config['device_name'] = device_name
+        
+        dest_dir = Prompt.ask(
+            "Enter destination directory", 
+            default=config.get('dest_dir', ''),
+            show_default=True
+        )
+        if dest_dir:
+            # If the path is relative (doesn't start with /), make it absolute from current directory
+            if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
+                dest_dir = os.path.join(os.getcwd(), dest_dir)
+            config['dest_dir'] = os.path.expanduser(dest_dir)
+        
+        moc_filename = Prompt.ask(
+            "Enter MOC filename (without extension)", 
+            default=config.get('moc_filename', ''),
+            show_default=True
+        )
+        config['moc_filename'] = moc_filename
+    else:
+        print("Klippy Configuration Setup")
+        print("=========================")
+        
+        # Only show the current config values in the prompt, no defaults
+        device_name = input(f"Enter device name [{config.get('device_name', '')}]: ")
+        # Always update the config, even if the user just pressed Enter (use the current value)
+        config['device_name'] = device_name if device_name else config.get('device_name', '')
+        
+        dest_dir = input(f"Enter destination directory [{config.get('dest_dir', '')}]: ")
+        if dest_dir:
+            # If the path is relative (doesn't start with /), make it absolute from current directory
+            if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
+                dest_dir = os.path.join(os.getcwd(), dest_dir)
+            config['dest_dir'] = os.path.expanduser(dest_dir)
+        
+        moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', '')}]: ")
+        # Always update the config, even if the user just pressed Enter (use the current value)
+        config['moc_filename'] = moc_filename if moc_filename else config.get('moc_filename', '')
     
     save_config(config)
     return config
@@ -134,70 +224,161 @@ def read_clippings(file_path):
 def parse_clippings(content):
     clippings = {}
     entries = content.split('==========')
+    
+    total_entries = len(entries)
+    processed_entries = 0
+    
+    if RICH_AVAILABLE:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            TextColumn("[bold]{task.completed}/{task.total}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("[green]Parsing entries...", total=total_entries)
+            
+            for entry in entries:
+                processed_entries += 1
+                progress.update(task, completed=processed_entries)
+                
+                entry = entry.strip()
+                if not entry:
+                    continue
 
-    for entry in entries:
-        entry = entry.strip()
-        if not entry:
-            continue
+                lines = entry.split('\n')
+                if len(lines) < 3:
+                    continue
 
-        lines = entry.split('\n')
-        if len(lines) < 3:
-            continue
+                book_line = lines[0].strip().lstrip("\ufeff")  # Strip BOM if present
+                location_line = lines[1].strip() if len(lines) > 1 else ""
+                quote = '\n'.join(lines[2:]).strip() if len(lines) > 2 else ""
 
-        book_line = lines[0].strip().lstrip("\ufeff")  # Strip BOM if present
-        location_line = lines[1].strip() if len(lines) > 1 else ""
-        quote = '\n'.join(lines[2:]).strip() if len(lines) > 2 else ""
+                # Extract book title and author
+                book_match = re.search(r'^(.*?)(?:\((.*?)\))?$', book_line)
+                if book_match:
+                    book_title = book_match.group(1).strip()
+                    page_number = ""
 
-        # Extract book title and author
-        book_match = re.search(r'^(.*?)(?:\((.*?)\))?$', book_line)
-        if book_match:
-            book_title = book_match.group(1).strip()
-            page_number = ""
+                    # Extract page or location number
+                    page_match = re.search(r'page (\d+)', location_line)
+                    if page_match:
+                        page_number = page_match.group(1)
+                    else:
+                        loc_match = re.search(r'location (\d+)', location_line)
+                        if loc_match:
+                            page_number = f"loc {loc_match.group(1)}"
 
-            # Extract page or location number
-            page_match = re.search(r'page (\d+)', location_line)
-            if page_match:
-                page_number = page_match.group(1)
-            else:
-                loc_match = re.search(r'location (\d+)', location_line)
-                if loc_match:
-                    page_number = f"loc {loc_match.group(1)}"
+                    if book_title and quote:
+                        # Ensure each book has a unique set of quotes
+                        if book_title not in clippings:
+                            clippings[book_title] = set()
 
-            if book_title and quote:
-                # Ensure each book has a unique set of quotes
-                if book_title not in clippings:
-                    clippings[book_title] = set()
+                        clippings[book_title].add((page_number, quote))
+    else:
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
 
-                clippings[book_title].add((page_number, quote))
+            lines = entry.split('\n')
+            if len(lines) < 3:
+                continue
 
-    print(f"Found {sum(len(qs) for qs in clippings.values())} unique clippings across {len(clippings)} books.")
+            book_line = lines[0].strip().lstrip("\ufeff")  # Strip BOM if present
+            location_line = lines[1].strip() if len(lines) > 1 else ""
+            quote = '\n'.join(lines[2:]).strip() if len(lines) > 2 else ""
+
+            # Extract book title and author
+            book_match = re.search(r'^(.*?)(?:\((.*?)\))?$', book_line)
+            if book_match:
+                book_title = book_match.group(1).strip()
+                page_number = ""
+
+                # Extract page or location number
+                page_match = re.search(r'page (\d+)', location_line)
+                if page_match:
+                    page_number = page_match.group(1)
+                else:
+                    loc_match = re.search(r'location (\d+)', location_line)
+                    if loc_match:
+                        page_number = f"loc {loc_match.group(1)}"
+
+                if book_title and quote:
+                    # Ensure each book has a unique set of quotes
+                    if book_title not in clippings:
+                        clippings[book_title] = set()
+
+                    clippings[book_title].add((page_number, quote))
+
+    total_clippings = sum(len(qs) for qs in clippings.values())
+    if RICH_AVAILABLE:
+        console.print(f"[green]Found [bold]{total_clippings}[/bold] unique clippings across [bold]{len(clippings)}[/bold] books.[/green]")
+    else:
+        print(f"Found {total_clippings} unique clippings across {len(clippings)} books.")
     return clippings
 
 # Create markdown file for each book
 def create_markdown_files(clippings, dest_dir, moc_filename):
     filenames = {}
 
-    print(f"Creating markdown files for {len(clippings)} books")
-    for book, quotes in clippings.items():
-        clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
-        filename = f"{clean_book_name}.md"
-        filepath = os.path.join(dest_dir, filename)
-        filenames[book] = clean_book_name
+    if RICH_AVAILABLE:
+        console.print(f"[bold]Creating markdown files for [green]{len(clippings)}[/green] books[/bold]")
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            TextColumn("[bold]{task.completed}/{task.total}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("[green]Processing books...", total=len(clippings))
+            
+            for i, (book, quotes) in enumerate(clippings.items()):
+                clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
+                filename = f"{clean_book_name}.md"
+                filepath = os.path.join(dest_dir, filename)
+                filenames[book] = clean_book_name
 
-        # Sort quotes by page/location number (if available)
-        sorted_quotes = sorted(quotes, key=lambda q: q[0] if q[0] else "")
+                # Sort quotes by page/location number (if available)
+                sorted_quotes = sorted(quotes, key=lambda q: q[0] if q[0] else "")
 
-        print(f"Writing {len(sorted_quotes)} unique clippings to {repr(filepath)}")
-        with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
-            md_file.write(f"[[{moc_filename}]]\n\n")
-            md_file.write(f"# {book}\n\n")
+                progress.update(task, description=f"[cyan]Writing {book}...[/cyan]", completed=i)
+                
+                with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
+                    md_file.write(f"[[{moc_filename}]]\n\n")
+                    md_file.write(f"# {book}\n\n")
 
-            for page, quote in sorted_quotes:
-                if page:
-                    md_file.write(f"**Page {page}**\n\n")
-                else:
-                    md_file.write("**Unknown location**\n\n")
-                md_file.write(f"> {quote}\n\n")
+                    for page, quote in sorted_quotes:
+                        if page:
+                            md_file.write(f"**Page {page}**\n\n")
+                        else:
+                            md_file.write("**Unknown location**\n\n")
+                        md_file.write(f"> {quote}\n\n")
+                
+                progress.update(task, completed=i+1)
+    else:
+        print(f"Creating markdown files for {len(clippings)} books")
+        for book, quotes in clippings.items():
+            clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
+            filename = f"{clean_book_name}.md"
+            filepath = os.path.join(dest_dir, filename)
+            filenames[book] = clean_book_name
+
+            # Sort quotes by page/location number (if available)
+            sorted_quotes = sorted(quotes, key=lambda q: q[0] if q[0] else "")
+
+            print(f"Writing {len(sorted_quotes)} unique clippings to {repr(filepath)}")
+            with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
+                md_file.write(f"[[{moc_filename}]]\n\n")
+                md_file.write(f"# {book}\n\n")
+
+                for page, quote in sorted_quotes:
+                    if page:
+                        md_file.write(f"**Page {page}**\n\n")
+                    else:
+                        md_file.write("**Unknown location**\n\n")
+                    md_file.write(f"> {quote}\n\n")
 
     create_moc_file(filenames, dest_dir, moc_filename)
     return filenames
@@ -206,7 +387,11 @@ def create_markdown_files(clippings, dest_dir, moc_filename):
 def create_moc_file(filenames, dest_dir, moc_filename):
     moc_filepath = os.path.join(dest_dir, f"{moc_filename}.md")
 
-    print(f"Creating MOC file at {repr(moc_filepath)}")
+    if RICH_AVAILABLE:
+        console.print(f"[bold]Creating MOC file at[/bold] {repr(moc_filepath)}")
+    else:
+        print(f"Creating MOC file at {repr(moc_filepath)}")
+        
     with open(moc_filepath, 'w', encoding='utf-8') as moc_file:
         moc_file.write("[[home]]\n\n")
         current_date = datetime.now().strftime("%Y-%m-%d")
@@ -217,6 +402,9 @@ def create_moc_file(filenames, dest_dir, moc_filename):
         for book in sorted_books:
             clean_name = filenames[book]
             moc_file.write(f"[[{clean_name}]]\n")
+            
+    if RICH_AVAILABLE:
+        console.print(f"[green]✓[/green] MOC file created with [bold]{len(filenames)}[/bold] book links")
 
 # Process clippings
 def process_clippings(config, delete_source=False):
@@ -226,37 +414,75 @@ def process_clippings(config, delete_source=False):
     
     clippings_file_path = get_clippings_file_path(device_name)
     
-    print(f"Looking for clippings at: {clippings_file_path}")
-    print(f"Will save markdown files to: {dest_dir}")
+    if RICH_AVAILABLE:
+        console.print(f"[bold]Looking for clippings at:[/bold] {clippings_file_path}")
+        console.print(f"[bold]Will save markdown files to:[/bold] {dest_dir}")
+    else:
+        print(f"Looking for clippings at: {clippings_file_path}")
+        print(f"Will save markdown files to: {dest_dir}")
     
     if not os.path.exists(clippings_file_path):
-        print(f"ERROR: Clippings file not found at {clippings_file_path}")
+        if RICH_AVAILABLE:
+            console.print(f"[bold red]ERROR:[/bold red] Clippings file not found at {clippings_file_path}")
+        else:
+            print(f"ERROR: Clippings file not found at {clippings_file_path}")
         return False
     
     ensure_dest_dir(dest_dir)
-    content = read_clippings(clippings_file_path)
-    clippings = parse_clippings(content)
+    
+    if RICH_AVAILABLE:
+        with console.status("[bold green]Reading clippings file...", spinner="dots"):
+            content = read_clippings(clippings_file_path)
+        
+        with console.status("[bold green]Parsing clippings...", spinner="dots"):
+            clippings = parse_clippings(content)
+    else:
+        content = read_clippings(clippings_file_path)
+        clippings = parse_clippings(content)
     
     if clippings:
-        create_markdown_files(clippings, dest_dir, moc_filename)
+        if RICH_AVAILABLE:
+            with console.status("[bold green]Creating markdown files...", spinner="dots"):
+                create_markdown_files(clippings, dest_dir, moc_filename)
+        else:
+            create_markdown_files(clippings, dest_dir, moc_filename)
         
         if delete_source:
             try:
                 # Create a backup before deleting
                 backup_path = os.path.join(dest_dir, "My_Clippings_backup.txt")
-                shutil.copy2(clippings_file_path, backup_path)
-                print(f"Created backup at {backup_path}")
                 
-                # Delete the original file
-                os.remove(clippings_file_path)
-                print(f"Deleted source file: {clippings_file_path}")
+                if RICH_AVAILABLE:
+                    with console.status("[bold yellow]Creating backup...", spinner="dots"):
+                        shutil.copy2(clippings_file_path, backup_path)
+                    console.print(f"[green]Created backup at[/green] {backup_path}")
+                    
+                    if Confirm.ask("Delete original clippings file?"):
+                        os.remove(clippings_file_path)
+                        console.print(f"[green]Deleted source file:[/green] {clippings_file_path}")
+                else:
+                    shutil.copy2(clippings_file_path, backup_path)
+                    print(f"Created backup at {backup_path}")
+                    
+                    # Delete the original file
+                    os.remove(clippings_file_path)
+                    print(f"Deleted source file: {clippings_file_path}")
             except Exception as e:
-                print(f"Error while trying to delete source file: {e}")
+                if RICH_AVAILABLE:
+                    console.print(f"[bold red]Error while trying to delete source file:[/bold red] {e}")
+                else:
+                    print(f"Error while trying to delete source file: {e}")
         
-        print("Done! Markdown files and MOC created successfully.")
+        if RICH_AVAILABLE:
+            console.print("[bold green]✓ Done![/bold green] Markdown files and MOC created successfully.")
+        else:
+            print("Done! Markdown files and MOC created successfully.")
         return True
     else:
-        print("No clippings found to process.")
+        if RICH_AVAILABLE:
+            console.print("[yellow]No clippings found to process.[/yellow]")
+        else:
+            print("No clippings found to process.")
         return False
 
 # Main function
@@ -266,28 +492,75 @@ def delete_clippings_file(config):
     dest_dir = os.path.expanduser(config.get('dest_dir', ''))
     clippings_file_path = get_clippings_file_path(device_name)
     
-    print(f"Looking for clippings at: {clippings_file_path}")
+    if RICH_AVAILABLE:
+        console.print(f"[bold]Looking for clippings at:[/bold] {clippings_file_path}")
+    else:
+        print(f"Looking for clippings at: {clippings_file_path}")
     
     if not os.path.exists(clippings_file_path):
-        print(f"ERROR: Clippings file not found at {clippings_file_path}")
+        if RICH_AVAILABLE:
+            console.print(f"[bold red]ERROR:[/bold red] Clippings file not found at {clippings_file_path}")
+        else:
+            print(f"ERROR: Clippings file not found at {clippings_file_path}")
         return False
     
     try:
         # Create a backup before deleting
         ensure_dest_dir(dest_dir)
         backup_path = os.path.join(dest_dir, "My_Clippings_backup.txt")
-        shutil.copy2(clippings_file_path, backup_path)
-        print(f"Created backup at {backup_path}")
         
-        # Delete the original file
-        os.remove(clippings_file_path)
-        print(f"Deleted source file: {clippings_file_path}")
+        if RICH_AVAILABLE:
+            with console.status("[bold yellow]Creating backup...", spinner="dots"):
+                shutil.copy2(clippings_file_path, backup_path)
+            console.print(f"[green]Created backup at[/green] {backup_path}")
+            
+            if Confirm.ask("Delete original clippings file?"):
+                os.remove(clippings_file_path)
+                console.print(f"[green]✓[/green] Deleted source file: {clippings_file_path}")
+            else:
+                console.print("[yellow]Operation cancelled by user[/yellow]")
+                return False
+        else:
+            shutil.copy2(clippings_file_path, backup_path)
+            print(f"Created backup at {backup_path}")
+            
+            # Delete the original file
+            os.remove(clippings_file_path)
+            print(f"Deleted source file: {clippings_file_path}")
         return True
     except Exception as e:
-        print(f"Error while trying to delete source file: {e}")
+        if RICH_AVAILABLE:
+            console.print(f"[bold red]Error while trying to delete source file:[/bold red] {e}")
+        else:
+            print(f"Error while trying to delete source file: {e}")
         return False
 
+def display_welcome():
+    if not RICH_AVAILABLE:
+        return
+        
+    console.print(Panel.fit(
+        "[bold blue]Klippy[/bold blue] - [cyan]Kindle Clippings to Markdown Converter[/cyan]",
+        border_style="blue"
+    ))
+    
+    # Create a table for commands
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Command", style="dim")
+    table.add_column("Description")
+    
+    table.add_row("--config", "Configure Klippy settings")
+    table.add_row("--add", "Process clippings without deleting source file")
+    table.add_row("--sync", "Process clippings and delete source file")
+    table.add_row("--delete", "Delete clippings file without processing")
+    
+    console.print(table)
+    console.print()
+
 def main():
+    if RICH_AVAILABLE:
+        display_welcome()
+    
     parser = argparse.ArgumentParser(description='Kindle clippings to Markdown converter for Obsidian')
     parser.add_argument('--config', action='store_true', help='Configure Klippy settings')
     parser.add_argument('--add', action='store_true', help='Process clippings without deleting source file')
@@ -309,7 +582,8 @@ def main():
     
     # If no action flags are provided, show help
     if not (args.add or args.sync):
-        parser.print_help()
+        if not RICH_AVAILABLE:  # Only show standard help if rich is not available
+            parser.print_help()
         return
     
     # --sync takes precedence over --add if both are specified
