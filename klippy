@@ -22,14 +22,11 @@ def load_config():
         try:
             with open(CONFIG_FILE, 'r') as f:
                 user_config = json.load(f)
-                # Merge with default config to ensure all keys exist
-                config = DEFAULT_CONFIG.copy()
-                config.update(user_config)
-                return config
+                return user_config
         except json.JSONDecodeError:
-            print(f"Error reading config file. Using default configuration.")
-            return DEFAULT_CONFIG.copy()
-    return DEFAULT_CONFIG.copy()
+            print(f"Error reading config file. Using empty configuration.")
+            return {}
+    return {}
 
 # Save configuration
 def save_config(config):
@@ -67,20 +64,21 @@ def setup_config():
     print("Klippy Configuration Setup")
     print("=========================")
     
-    device_name = input(f"Enter device name [{config.get('device_name', 'Kindle')}]: ")
-    # Always update the config, even if the user just pressed Enter (use the default value)
-    config['device_name'] = device_name if device_name else config.get('device_name', 'Kindle')
+    # Only show the current config values in the prompt, no defaults
+    device_name = input(f"Enter device name [{config.get('device_name', '')}]: ")
+    # Always update the config, even if the user just pressed Enter (use the current value)
+    config['device_name'] = device_name if device_name else config.get('device_name', '')
     
-    dest_dir = input(f"Enter destination directory [{config.get('dest_dir', DEFAULT_CONFIG['dest_dir'])}]: ")
+    dest_dir = input(f"Enter destination directory [{config.get('dest_dir', '')}]: ")
     if dest_dir:
         # If the path is relative (doesn't start with /), make it absolute from current directory
         if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
             dest_dir = os.path.join(os.getcwd(), dest_dir)
         config['dest_dir'] = os.path.expanduser(dest_dir)
     
-    moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', 'moc-clippings')}]: ")
-    # Always update the config, even if the user just pressed Enter (use the default value)
-    config['moc_filename'] = moc_filename if moc_filename else config.get('moc_filename', 'moc-clippings')
+    moc_filename = input(f"Enter MOC filename (without extension) [{config.get('moc_filename', '')}]: ")
+    # Always update the config, even if the user just pressed Enter (use the current value)
+    config['moc_filename'] = moc_filename if moc_filename else config.get('moc_filename', '')
     
     save_config(config)
     return config
@@ -192,9 +190,9 @@ def create_moc_file(filenames, dest_dir, moc_filename):
 
 # Process clippings
 def process_clippings(config, delete_source=False):
-    device_name = config.get('device_name', 'Kindle')
-    dest_dir = os.path.expanduser(config.get('dest_dir', DEFAULT_CONFIG['dest_dir']))
-    moc_filename = config.get('moc_filename', 'moc-clippings')
+    device_name = config.get('device_name', '')
+    dest_dir = os.path.expanduser(config.get('dest_dir', ''))
+    moc_filename = config.get('moc_filename', '')
     
     clippings_file_path = get_clippings_file_path(device_name)
     
