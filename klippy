@@ -384,39 +384,29 @@ def create_markdown_files(clippings, dest_dir, create_moc=True, moc_filename="")
     if RICH_AVAILABLE:
         console.print(f"[bold]Creating markdown files for [green]{len(clippings)}[/green] books[/bold]")
         
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(),
-            TextColumn("[bold]{task.completed}/{task.total}"),
-            console=console
-        ) as progress:
-            task = progress.add_task("[green]Processing books...", total=len(clippings))
+        total_books = len(clippings)
+        for i, (book, quotes) in enumerate(clippings.items()):
+            console.print(f"[cyan]Writing book {i+1}/{total_books}: {book}...[/cyan]")
             
-            for i, (book, quotes) in enumerate(clippings.items()):
-                clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
-                filename = f"{clean_book_name}.md"
-                filepath = os.path.join(dest_dir, filename)
-                filenames[book] = clean_book_name
+            clean_book_name = re.sub(r'[:\\/?*"><|]', '', book).strip()
+            filename = f"{clean_book_name}.md"
+            filepath = os.path.join(dest_dir, filename)
+            filenames[book] = clean_book_name
 
-                # Sort quotes by page/location number (if available)
-                sorted_quotes = sorted(quotes, key=lambda q: q[0] if q[0] else "")
+            # Sort quotes by page/location number (if available)
+            sorted_quotes = sorted(quotes, key=lambda q: q[0] if q[0] else "")
+            
+            with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
+                if create_moc and moc_filename:
+                    md_file.write(f"[[{moc_filename}]]\n\n")
+                md_file.write(f"# {book}\n\n")
 
-                progress.update(task, description=f"[cyan]Writing {book}...[/cyan]", completed=i)
-                
-                with open(filepath, 'w', encoding='utf-8') as md_file:  # 'w' mode overwrites existing files
-                    if create_moc and moc_filename:
-                        md_file.write(f"[[{moc_filename}]]\n\n")
-                    md_file.write(f"# {book}\n\n")
-
-                    for page, quote in sorted_quotes:
-                        if page:
-                            md_file.write(f"**Page {page}**\n\n")
-                        else:
-                            md_file.write("**Unknown location**\n\n")
-                        md_file.write(f"> {quote}\n\n")
-                
-                progress.update(task, completed=i+1)
+                for page, quote in sorted_quotes:
+                    if page:
+                        md_file.write(f"**Page {page}**\n\n")
+                    else:
+                        md_file.write("**Unknown location**\n\n")
+                    md_file.write(f"> {quote}\n\n")
     else:
         print(f"Creating markdown files for {len(clippings)} books")
         for book, quotes in clippings.items():
