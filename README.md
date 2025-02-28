@@ -23,16 +23,6 @@ Klippy extracts your Kindle highlights and notes, organizing them into neatly fo
 
 ## Installation
 
-> **NOTE:** Backup your existing configuration (if any exists)
-
-### Install Klippy
-
-#### Recommended Step
-
-Fork this repo so that you have your own copy that you can modify, then install by cloning the fork to your machine using one of the commands below.
-
-> **NOTE:** Your fork's URL will be something like this: `https://github.com/<your_github_username>/klippy.git`
-
 #### Clone Klippy Repository
 
 **Linux and Mac**
