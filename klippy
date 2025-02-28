@@ -260,11 +260,39 @@ def process_clippings(config, delete_source=False):
         return False
 
 # Main function
+# Delete clippings file without processing
+def delete_clippings_file(config):
+    device_name = config.get('device_name', '')
+    dest_dir = os.path.expanduser(config.get('dest_dir', ''))
+    clippings_file_path = get_clippings_file_path(device_name)
+    
+    print(f"Looking for clippings at: {clippings_file_path}")
+    
+    if not os.path.exists(clippings_file_path):
+        print(f"ERROR: Clippings file not found at {clippings_file_path}")
+        return False
+    
+    try:
+        # Create a backup before deleting
+        ensure_dest_dir(dest_dir)
+        backup_path = os.path.join(dest_dir, "My_Clippings_backup.txt")
+        shutil.copy2(clippings_file_path, backup_path)
+        print(f"Created backup at {backup_path}")
+        
+        # Delete the original file
+        os.remove(clippings_file_path)
+        print(f"Deleted source file: {clippings_file_path}")
+        return True
+    except Exception as e:
+        print(f"Error while trying to delete source file: {e}")
+        return False
+
 def main():
     parser = argparse.ArgumentParser(description='Kindle clippings to Markdown converter for Obsidian')
     parser.add_argument('--config', action='store_true', help='Configure Klippy settings')
     parser.add_argument('--add', action='store_true', help='Process clippings without deleting source file')
     parser.add_argument('--sync', action='store_true', help='Process clippings and delete source file')
+    parser.add_argument('--delete', action='store_true', help='Delete clippings file without processing')
     
     args = parser.parse_args()
     
@@ -273,6 +301,11 @@ def main():
         return
     
     config = load_config()
+    
+    # Handle delete operation
+    if args.delete:
+        delete_clippings_file(config)
+        return
     
     # If no action flags are provided, show help
     if not (args.add or args.sync):
