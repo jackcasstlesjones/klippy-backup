@@ -173,9 +173,16 @@ def setup_config():
                 show_default=True
             )
             if dest_dir:
-                # If the path is relative (doesn't start with /), make it absolute from current directory
+                # Validate that the path contains at least one directory separator
+                if '/' not in dest_dir and '\\' not in dest_dir and not dest_dir.startswith('~'):
+                    console.print("[bold red]Error:[/bold red] Please enter a full path with at least one directory separator (/ or \\).")
+                    console.print("Examples: ~/Documents/clippings, /Users/username/Documents, C:\\Users\\username\\Documents")
+                    continue
+                
+                # If the path is relative (doesn't start with / or ~), make it absolute
                 if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
-                    dest_dir = os.path.join(os.getcwd(), dest_dir)
+                    dest_dir = os.path.abspath(dest_dir)
+                
                 expanded_path = os.path.expanduser(dest_dir)
                 
                 # Check if the directory exists or can be created
@@ -221,9 +228,16 @@ def setup_config():
         while not valid_dest_dir:
             dest_dir = input(f"Enter destination directory [{config.get('dest_dir', '')}]: ")
             if dest_dir:
-                # If the path is relative (doesn't start with /), make it absolute from current directory
+                # Validate that the path contains at least one directory separator
+                if '/' not in dest_dir and '\\' not in dest_dir and not dest_dir.startswith('~'):
+                    print("Error: Please enter a full path with at least one directory separator (/ or \\).")
+                    print("Examples: ~/Documents/clippings, /Users/username/Documents, C:\\Users\\username\\Documents")
+                    continue
+                
+                # If the path is relative (doesn't start with / or ~), make it absolute
                 if not dest_dir.startswith('/') and not dest_dir.startswith('~'):
-                    dest_dir = os.path.join(os.getcwd(), dest_dir)
+                    dest_dir = os.path.abspath(dest_dir)
+                
                 expanded_path = os.path.expanduser(dest_dir)
                 
                 # Check if the directory exists or can be created
