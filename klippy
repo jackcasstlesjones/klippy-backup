@@ -9,6 +9,7 @@ from datetime import datetime
 
 # Define default paths and settings
 CONFIG_FILE = os.path.expanduser('~/.klippy_config.json')
+print(f"Config file path: {CONFIG_FILE}")
 DEFAULT_CONFIG = {
     'device_name': 'Kindle',
     'dest_dir': os.path.expanduser('~/obsidian/jacks-vault/clippings'),
@@ -36,9 +37,28 @@ def save_config(config):
     valid_config = {k: config[k] for k in DEFAULT_CONFIG.keys() if k in config}
     
     print(f"Saving configuration: {valid_config}")
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(valid_config, f, indent=4, sort_keys=True)
-    print(f"Configuration saved to {CONFIG_FILE}")
+    print(f"Writing to file: {CONFIG_FILE}")
+    
+    # Debug: Check if file exists and is writable
+    if os.path.exists(CONFIG_FILE):
+        print(f"File exists. Current permissions: {oct(os.stat(CONFIG_FILE).st_mode)}")
+    
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(valid_config, f, indent=4, sort_keys=True)
+            f.flush()
+            os.fsync(f.fileno())  # Force write to disk
+        print(f"Configuration saved to {CONFIG_FILE}")
+        
+        # Verify the file was actually written
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r') as f:
+                saved_config = json.load(f)
+            print(f"Verification - File contains: {saved_config}")
+        else:
+            print(f"ERROR: File does not exist after save!")
+    except Exception as e:
+        print(f"ERROR saving configuration: {str(e)}")
 
 # Setup configuration interactively
 def setup_config():
